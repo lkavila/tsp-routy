@@ -23,11 +23,15 @@ def calcularRuta():
         distances = jsonResponse['distances']
         path = solve_tsp(distances, endpoints=(0, 0)) #halla el camino más corto iniciando en 0 y terminando en 0
         distance = path_cost(distances, path)       #calcula la distancia del camino mas corto
+        ordenado = []
+        for i in path:
+            ordenado.append(body['locations'][i])
         return jsonify({
-                    'CaminoMinimo': path,
+                    'orden': path,
+                    'caminoMinimo': ordenado,
                     'distanciaMinima': distance,
                     'message': 'este es el camino más corto',
-                    'Distancias': distances}), 200
+                    'distancias': {'distancias':distances, 'message': 'Estas son las distancias dadas por la api ORS'}}), 200
     else:
         return jsonify({'message': 'error en el llamado a la api de ors'}), 400
 
