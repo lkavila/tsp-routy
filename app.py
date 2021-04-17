@@ -9,19 +9,24 @@ app = Flask(__name__)
 def calcularRuta():
 
     headers = request.headers
-    apiKey = headers['x-api-key']
+    api_key = headers['x-api-key']
+    circular = headers['circular']
+
     body = request.get_json()
     myheaders = {
         'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
-        'Authorization': apiKey,
+        'Authorization': api_key,
         'Content-Type': 'application/json; charset=utf-8'
     }
     call = requests.post('https://api.openrouteservice.org/v2/matrix/driving-car', json=body, headers=myheaders)
-    print(call.status_code)
-    if (call.status_code==200):
-        jsonResponse = call.json()
-        distances = jsonResponse['distances']
-        path = solve_tsp(distances, endpoints=(0, 0)) #halla el camino más corto iniciando en 0 y terminando en 0
+
+    if call.status_code == 200:
+        json_response = call.json()
+        distances = json_response['distances']         #Esta es la matrix de distancia
+        if circular == "true":
+            path = solve_tsp(distances, endpoints=(0, 0))
+        else:
+            path = solve_tsp(distances, endpoints=(0, len(distances)-1)) #halla el camino más corto iniciando en 0 y terminando en 0
         distance = path_cost(distances, path)       #calcula la distancia del camino mas corto
         ordenado = []
         for i in path:
@@ -40,5 +45,18 @@ def calcularRuta():
 def home():
     return jsonify({'Message': 'La app esta funcionando, ve a la ruta calcularRuta tipo POST para su funcionalidad'})
 
+@app.route('/prueba')
+def prueba():
+    distances = [[0, 1, 2, 3],
+                 [1, 0, 2, 3],
+                 [2, 2, 0, 4],
+                 [3, 3, 4, 0]]
+    path = solve_tsp(distances, endpoints=(0, len(distances)-1))  # halla el camino más corto iniciando en 0 y terminando en 0
+    distance = path_cost(distances, path)  # calcula la distancia del camino mas corto
+    return jsonify({
+        'matriz': distances,
+        'camino': path,
+        'distancia': distance
+    })
 if __name__ == '__main__':
     app.run(debug=True)
